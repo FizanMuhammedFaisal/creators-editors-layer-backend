@@ -27,3 +27,4 @@ prisma/dev.db        # local SQLite file if you ever used SQLite
 .DS_Store
 
 
+getToken.js
