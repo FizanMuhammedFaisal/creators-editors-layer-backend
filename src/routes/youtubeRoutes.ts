@@ -62,9 +62,9 @@ const channelName = channel.snippet.title;
             }
         })
 
-        res.status(201).json(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=success`);
+        res.status(200).json(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=success`);
     }catch(error){
-        res.status(201).json(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=error`);
+        res.status(200).json(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=error`);
     }
 
 })
