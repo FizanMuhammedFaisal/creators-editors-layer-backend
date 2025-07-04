@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {Request, Response} from 'express'
-import type { users as User,  workspaces as Workspace } from '../generated/prisma/client.js';;
+import type { users as User, workspaces as Workspace } from '../generated/prisma/client.js';
 import {db} from '../db/index.js'
 
 import { ApiResponse } from '../types/api.js';

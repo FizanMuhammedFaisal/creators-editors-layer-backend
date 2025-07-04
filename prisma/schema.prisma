@@ -38,6 +38,7 @@ model users {
   youtube_access_token  String?
   youtube_refresh_token String?
   created_at            DateTime?           @default(now()) @db.Timestamp(6)
+  name                  String              @default("")
   submissions           submissions[]
   workspace_members     workspace_members[]
   workspaces            workspaces[]
