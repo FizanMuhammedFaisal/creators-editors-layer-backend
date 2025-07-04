@@ -54,8 +54,10 @@ Get All Workspaces
 
 Create Workspace
   POST /api/workspaces
-  Body: { name: "My New Workspace" }
+  Headers: Content-Type: application/json, Authorization: Bearer <jwt-token>
+  Body: { name: "My Channel Workspace", channel_id: "UC123...", channel_name: "My Channel" }
   Response: Workspace object
+  Note: channel_id is required and should be obtained from /api/youtube/me after linking a channel.
 
 Submissions
 -----------
@@ -87,6 +89,12 @@ Complete OAuth Flow
   GET /api/oauth/oauth2callback?code={auth_code}
   Authorization: Bearer <jwt-token>
   Response: Redirects to frontend dashboard with success/error status
+
+Get Latest Linked YouTube Channel
+  GET /api/youtube/me
+  Headers: Authorization: Bearer <jwt-token>
+  Response: { channel: { channel_id, channel_name } }
+  Returns the latest YouTube channel linked by the authenticated user.
 
 Upload API
 ----------
