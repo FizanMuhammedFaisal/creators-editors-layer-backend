@@ -69,4 +69,15 @@ const channelName = channel.snippet.title;
 
 })
 
+//youtube channel name
+router.get('/me', authMiddleware, async (req, res) => {
+    const user = req.user;
+    const channels = await db.youtube_channels.findFirst({
+        where: { user_id: user.id },
+        orderBy: { created_at: 'desc' },
+        select: { channel_id: true, channel_name: true }
+    });
+    res.json({ channels });
+});
+
 export default router
