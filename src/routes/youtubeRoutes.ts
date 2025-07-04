@@ -62,9 +62,9 @@ const channelName = channel.snippet.title;
             }
         })
 
-        res.redirect('http://localhost:3000/dashboard?auth=success');
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=success`);
     }catch(error){
-        res.redirect('http://localhost:3000/dashboard?auth=error');
+        res.redirect(`${process.env.FRONTEND_URL}/dashboard/org-add?auth=error`);
     }
 
 })
