@@ -32,7 +32,7 @@ router.get('/', async (req:WorkspaceRequest, res:any) => {
 //create a workspace
 router.post('/', async (req:Request, res:any) => {
     const user = req.user!
-    const {name} = req.body
+    const {name, channel_id} = req.body
 
     const exits = await db.workspaces.findFirst({
         where:{
@@ -48,7 +48,8 @@ router.post('/', async (req:Request, res:any) => {
     const workspace = await db.workspaces.create({
         data:{
             name,
-            creator_id:user.id
+            creator_id:user.id,
+            youtube_channel_id:channel_id
         }
     })
   return res.status(201).json({ success: true, data: workspace });
