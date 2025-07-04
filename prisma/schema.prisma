@@ -10,9 +10,10 @@ datasource db {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model submissions {
-  id                          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  workspace_id                String?     @db.Uuid
-  uploader_id                 String?     @db.Uuid
+  id                          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workspace_id                String?           @db.Uuid
+  uploader_id                 String?           @db.Uuid
+  youtube_channel_id          String?           @db.Uuid
   title                       String
   description                 String?
   video_url                   String
@@ -20,38 +21,42 @@ model submissions {
   original_video_filename     String?
   original_thumbnail_filename String?
   youtube_video_id            String?
-  upload_status               String?     @default("pending")
-  status                      String?     @default("pending")
-  submitted_at                DateTime?   @default(now()) @db.Timestamp(6)
-  approved_at                 DateTime?   @db.Timestamp(6)
-  uploaded_to_youtube_at      DateTime?   @db.Timestamp(6)
-  users                       users?      @relation(fields: [uploader_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  workspaces                  workspaces? @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  upload_status               String?           @default("pending")
+  status                      String?           @default("pending")
+  submitted_at                DateTime?         @default(now()) @db.Timestamp(6)
+  approved_at                 DateTime?         @db.Timestamp(6)
+  uploaded_to_youtube_at      DateTime?         @db.Timestamp(6)
+  users                       users?            @relation(fields: [uploader_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  workspaces                  workspaces?       @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  youtube_channels            youtube_channels? @relation(fields: [youtube_channel_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([uploader_id], map: "idx_submissions_uploader_id")
+  @@index([workspace_id], map: "idx_submissions_workspace_id")
+  @@index([youtube_channel_id], map: "idx_submissions_youtube_channel_id")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  id                    String              @id @db.Uuid
-  email                 String              @unique
-  role                  String?
-  youtube_channel_id    String?
-  youtube_access_token  String?
-  youtube_refresh_token String?
-  created_at            DateTime?           @default(now()) @db.Timestamp(6)
-  name                  String              @default("")
-  submissions           submissions[]
-  workspace_members     workspace_members[]
-  workspaces            workspaces[]
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email             String              @unique
+  role              String?
+  name              String?             @default("")
+  created_at        DateTime?           @default(now()) @db.Timestamp(6)
+  submissions       submissions[]
+  workspace_members workspace_members[]
+  workspaces        workspaces[]
+  youtube_channels  youtube_channels[]
 }
 
 model workspace_members {
   workspace_id String     @db.Uuid
   user_id      String     @db.Uuid
   joined_at    DateTime?  @default(now()) @db.Timestamp(6)
-  users        users      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  workspaces   workspaces @relation(fields: [workspace_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users        users      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  workspaces   workspaces @relation(fields: [workspace_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([workspace_id, user_id])
+  @@index([user_id], map: "idx_workspace_members_user_id")
 }
 
 model workspaces {
@@ -62,4 +67,21 @@ model workspaces {
   submissions       submissions[]
   workspace_members workspace_members[]
   users             users?              @relation(fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model youtube_channels {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String        @db.Uuid
+  channel_id    String        @unique
+  channel_name  String
+  access_token  String
+  refresh_token String
+  expires_at    DateTime?     @db.Timestamp(6)
+  created_at    DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?     @default(now()) @db.Timestamp(6)
+  submissions   submissions[]
+  users         users         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, channel_id])
+  @@index([user_id], map: "idx_youtube_channels_user_id")
 }

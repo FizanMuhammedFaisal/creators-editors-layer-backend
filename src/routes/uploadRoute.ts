@@ -1,16 +1,18 @@
-import aws from 'aws-sdk';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import express from 'express';
 
 const router = express.Router();
 
-const s3 = new aws.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    }
 });
-
-router.post('/upload', async (req, res) => {
+router.post('/', async (req, res) => {
     try{
         const { fileName, fileType } = req.body;
 
@@ -21,17 +23,13 @@ router.post('/upload', async (req, res) => {
 
     const key = `${uuidv4()}-${fileName}`;
 
-    const params = {
+    const command = new PutObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME,
         Key: key,
-        Expires: 900, // 15 minutes
-        ContentType: fileType,
-        Conditions: [
-          ['content-length-range', 0, 4294967296] // 4GB max
-        ]
-    };
+        ContentType: fileType
+    });
 
-    const uploadURL = await s3.getSignedUrlPromise('putObject', params);
+    const uploadURL = await getSignedUrl(s3Client, command, { expiresIn: 900 });
 
     res.json({
         uploadURL,
@@ -44,5 +42,24 @@ router.post('/upload', async (req, res) => {
         res.status(500).json({ error: 'Failed to generate upload URL' });
     }
 })
+
+router.get('/:key', async (req, res) => {
+    try{
+        const { key } = req.params;
+        const command = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: key
+        });
+
+        const url = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+
+        res.redirect(url);
+    }catch(error){
+        console.error('Error getting file:', error);
+        res.status(500).json({ error: 'Failed to get file' });
+    }
+})
+
+
 
 export default router;

@@ -6,6 +6,9 @@ import { db } from '../db/index.js';
 const router = Router();
 import { Request } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
+
+const youtube = google.youtube('v3');
+
 const oauth2Client = new google.auth.OAuth2(
   process.env.YOUTUBE_CLIENT_ID,
   process.env.YOUTUBE_CLIENT_SECRET,
@@ -28,11 +31,34 @@ router.get('/oauth2callback',authMiddleware, async(req:Request, res:any)=>{
         const {tokens} = await oauth2Client.getToken(code as string)
         oauth2Client.setCredentials(tokens)
 
-        const uploadCredsToDb = await db.users.update({
-            where:{id:user.id},
-            data:{
-                youtube_access_token:tokens.access_token,
-                youtube_refresh_token: tokens.refresh_token,
+        const channelResponse = await youtube.channels.list({
+        auth: oauth2Client,
+  mine: true,
+  part: ['id','snippet']
+});
+const channel = channelResponse.data.items[0];
+const channelId = channel.id;
+const channelName = channel.snippet.title;
+
+        const uploadCredsToDb = await db.youtube_channels.upsert({
+            where: {
+                user_id_channel_id: {
+                    user_id: user.id,
+                    channel_id: channel.id
+                }
+            },
+            create: {
+                user_id: user.id,
+                channel_id: channel.id,
+                channel_name: channel.snippet.title,
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expires_at: tokens.expiry_date ? new Date(tokens.expiry_date) : null
+            },
+            update: {
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                expires_at: tokens.expiry_date ? new Date(tokens.expiry_date) : null
             }
         })
 
@@ -40,8 +66,6 @@ router.get('/oauth2callback',authMiddleware, async(req:Request, res:any)=>{
     }catch(error){
         res.redirect('http://localhost:3000/dashboard?auth=error');
     }
-
-    return res.status(200).json({ message: "YouTube connected successfully." });
 
 })
 
